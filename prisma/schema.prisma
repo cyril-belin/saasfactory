@@ -1,0 +1,161 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// USERS
+// ============================================
+// Users table extends Supabase Auth users
+model User {
+  id                String              @id @default(uuid())
+  email             String              @unique
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  // Relations
+  workspaceMembers  WorkspaceMember[]
+  ownedWorkspaces   Workspace[]         @relation("WorkspaceOwner")
+}
+
+// ============================================
+// WORKSPACES (Multi-tenant)
+// ============================================
+model Workspace {
+  id                        String              @id @default(uuid())
+  name                      String
+  slug                      String              @unique
+  ownerId                   String
+  
+  // Billing - Stripe integration
+  stripeCustomerId          String?             @unique
+  stripeSubscriptionId      String?             @unique
+  stripePriceId             String?
+  stripeCurrentPeriodEnd    DateTime?
+  subscriptionStatus        SubscriptionStatus  @default(INACTIVE)
+  
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+  
+  // Relations
+  owner                     User                @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members                   WorkspaceMember[]
+  
+  @@index([ownerId])
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+}
+
+// ============================================
+// WORKSPACE MEMBERS
+// ============================================
+model WorkspaceMember {
+  id            String          @id @default(uuid())
+  workspaceId   String
+  userId        String
+  role          WorkspaceRole   @default(MEMBER)
+  
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  
+  workspace     Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([workspaceId, userId])
+  @@index([userId])
+  @@index([workspaceId])
+}
+
+// ============================================
+// ANNOUNCEMENTS (Changelog)
+// ============================================
+model Announcement {
+  id            String              @id @default(uuid())
+  title         String
+  content       String              @db.Text
+  type          AnnouncementType    @default(UPDATE)
+  isPublic      Boolean             @default(true)
+  isPinned      Boolean             @default(false)
+  publishedAt   DateTime            @default(now())
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  
+  // Relations
+  readBy        AnnouncementRead[]
+}
+
+// ============================================
+// ANNOUNCEMENT READ TRACKING
+// ============================================
+model AnnouncementRead {
+  id              String        @id @default(uuid())
+  announcementId  String
+  userId          String
+  workspaceId     String?
+  readAt          DateTime      @default(now())
+  
+  announcement    Announcement  @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  
+  @@unique([announcementId, userId, workspaceId])
+  @@index([userId])
+  @@index([workspaceId])
+}
+
+// ============================================
+// FEATURE FLAGS
+// ============================================
+model FeatureFlag {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  name        String
+  description String?
+  enabled     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([key])
+}
+
+// ============================================
+// STRIPE EVENTS (for idempotency)
+// ============================================
+model StripeEvent {
+  id          String   @id // Stripe event ID
+  type        String
+  processed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  @@index([type])
+  @@index([processed])
+}
+
+// ============================================
+// ENUMS
+// ============================================
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  UNPAID
+  INACTIVE
+}
+
+enum WorkspaceRole {
+  OWNER
+  MEMBER
+}
+
+enum AnnouncementType {
+  FEATURE
+  UPDATE
+  FIX
+  ANNOUNCEMENT
+}

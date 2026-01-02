@@ -1,0 +1,105 @@
+// src/lib/services/workspace.ts
+import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
+
+export const getWorkspace = async (id: string) => {
+    return prisma.workspace.findUnique({
+        where: { id },
+        include: {
+            members: {
+                include: {
+                    user: true,
+                },
+            },
+        },
+    })
+}
+
+export const getUserWorkspaces = async (userId: string) => {
+    return prisma.workspace.findMany({
+        where: {
+            OR: [
+                { ownerId: userId },
+                {
+                    members: {
+                        some: {
+                            userId: userId,
+                        },
+                    },
+                },
+            ],
+        },
+        include: {
+            owner: true,
+        },
+    })
+}
+
+export const createWorkspace = async (data: {
+    name: string
+    slug: string
+    ownerId: string
+    stripeCustomerId?: string | null
+    stripeSubscriptionId?: string | null
+}) => {
+    return prisma.workspace.create({
+        data,
+    })
+}
+
+export const updateWorkspace = async (
+    id: string,
+    data: {
+        name?: string
+        slug?: string
+        subscriptionStatus?: 'ACTIVE' | 'TRIALING' | 'PAST_DUE' | 'CANCELED' | 'UNPAID' | 'INACTIVE'
+        stripeCustomerId?: string | null
+        stripeSubscriptionId?: string | null
+        stripePriceId?: string | null
+        stripeCurrentPeriodEnd?: Date | null
+    }
+) => {
+    return prisma.workspace.update({
+        where: { id },
+        data,
+    })
+}
+
+export const deleteWorkspace = async (id: string) => {
+    return prisma.workspace.delete({
+        where: { id },
+    })
+}
+
+export const addMember = async (
+    workspaceId: string,
+    email: string,
+    role: 'MEMBER' | 'OWNER' = 'MEMBER'
+) => {
+    const user = await prisma.user.findUnique({
+        where: { email },
+    })
+
+    if (!user) {
+        throw new Error('User not found')
+    }
+
+    return prisma.workspaceMember.create({
+        data: {
+            workspaceId,
+            userId: user.id,
+            role,
+        },
+    })
+}
+
+export const removeMember = async (workspaceId: string, userId: string) => {
+    return prisma.workspaceMember.delete({
+        where: {
+            workspaceId_userId: {
+                workspaceId,
+                userId,
+            },
+        },
+    })
+}
