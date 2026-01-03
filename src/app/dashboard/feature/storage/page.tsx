@@ -6,9 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { isFeatureEnabled } from '@/lib/services/feature-flags'
 import { AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { createClient } from '@/lib/supabase/server'
+import { prisma } from '@/lib/prisma'
 
 export default async function StoragePage() {
     const isEnabled = await isFeatureEnabled('storage')
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
     if (!isEnabled) {
         return (
@@ -22,6 +26,20 @@ export default async function StoragePage() {
                 </Alert>
             </div>
         )
+    }
+
+    // Fetch active workspace for user
+    // In a real scenario, this should come from a context or a specific route param if multiple workspaces
+    // For now, we take the first one or owned one
+    const workspaceMember = user ? await prisma.workspaceMember.findFirst({
+        where: { userId: user.id },
+        include: { workspace: true }
+    }) : null
+
+    let workspaceId = workspaceMember?.workspaceId
+    if (!workspaceId && user) {
+        const owned = await prisma.workspace.findFirst({ where: { ownerId: user.id }})
+        workspaceId = owned?.id
     }
 
     return (
@@ -46,6 +64,7 @@ export default async function StoragePage() {
                             <FileUploader
                                 directory="user-uploads"
                                 maxSize={10}
+                                workspaceId={workspaceId}
                             />
                         </Suspense>
                     </CardContent>

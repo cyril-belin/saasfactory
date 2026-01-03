@@ -33,6 +33,8 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
+import { useWorkspace } from '@/contexts/WorkspaceContext'
+
 interface SidebarProps {
     user: any // eslint-disable-line @typescript-eslint/no-explicit-any
     showWorkspaceSwitcher: boolean
@@ -44,6 +46,7 @@ export function Sidebar({ user, showWorkspaceSwitcher, showStorage, showChangelo
     const pathname = usePathname()
     const router = useRouter()
     const [mounted, setMounted] = useState(false)
+    const { workspaces, activeWorkspace } = useWorkspace()
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -82,7 +85,10 @@ export function Sidebar({ user, showWorkspaceSwitcher, showStorage, showChangelo
             {/* Workspace switcher */}
             {showWorkspaceSwitcher && (
                 <div className="mb-6">
-                    <WorkspaceSwitcher />
+                    <WorkspaceSwitcher
+                        workspaces={workspaces}
+                        currentWorkspace={activeWorkspace || undefined}
+                    />
                 </div>
             )}
 

@@ -9,6 +9,7 @@ import { QuickActionsWidget, QuickAction } from '@/components/dashboard/widgets/
 import { StorageWidget } from '@/components/dashboard/widgets/storage-widget'
 import { Building, CreditCard, Users, UserPlus, FileText, Settings, UploadCloud } from 'lucide-react'
 import { isFeatureEnabled } from '@/lib/services/feature-flags'
+import { MetricType } from '@prisma/client'
 
 export default async function DashboardPage() {
     const supabase = await createClient()
@@ -47,6 +48,17 @@ export default async function DashboardPage() {
         })
         if (plan) planName = plan.name
     }
+
+    // Fetch Usage
+    const storageUsage = await prisma.usage.findUnique({
+        where: {
+            workspaceId_metricType: {
+                workspaceId: currentWorkspace.id,
+                metricType: MetricType.STORAGE_MB
+            }
+        }
+    })
+    const usedBytes = (storageUsage?.currentValue || 0) * 1024 * 1024
 
     // Quick Actions Configuration
     const quickActions: QuickAction[] = [
@@ -134,7 +146,7 @@ export default async function DashboardPage() {
                         {isStorageEnabled && (
                             <div className="col-span-1">
                                 <StorageWidget
-                                    usedBytes={1024 * 1024 * 350} // TODO: Fetch real usage
+                                    usedBytes={usedBytes}
                                     totalBytes={1024 * 1024 * 1024} // 1GB Limit
                                 />
                             </div>

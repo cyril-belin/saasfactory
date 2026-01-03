@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import { StorageService } from '@/lib/services/storage'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { incrementStorageUsage } from '@/lib/actions/storage'
 
 interface FileUploaderProps {
     onUploadComplete?: (url: string, path: string) => void
@@ -19,6 +20,7 @@ interface FileUploaderProps {
     bucket?: string
     directory?: string
     className?: string
+    workspaceId?: string
 }
 
 export function FileUploader({
@@ -28,7 +30,8 @@ export function FileUploader({
     accept = '*/*',
     bucket,
     directory = 'uploads',
-    className
+    className,
+    workspaceId
 }: FileUploaderProps) {
     const [isDragging, setIsDragging] = useState(false)
     const [isUploading, setIsUploading] = useState(false)
@@ -88,6 +91,12 @@ export function FileUploader({
 
                 setUploadedUrl(publicUrl)
                 setUploadProgress(100)
+
+                // Update usage in background if workspaceId is provided
+                if (workspaceId) {
+                    incrementStorageUsage(file.size, workspaceId).catch(console.error)
+                }
+
                 onUploadComplete?.(publicUrl, data!.path)
                 toast.success('File uploaded successfully!')
             }

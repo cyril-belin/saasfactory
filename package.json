@@ -48,6 +48,7 @@
     "zod": "^4.3.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4",
     "@types/luxon": "^3.7.1",
     "@types/node": "^20",
