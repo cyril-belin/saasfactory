@@ -1,5 +1,5 @@
 // src/app/admin/settings/page.tsx
-import { Settings, ShieldAlert } from "lucide-react"
+import { Settings, ShieldAlert, Building2 } from "lucide-react"
 import { FeatureFlagToggle } from "@/components/admin/feature-flag-toggle"
 import { isFeatureEnabled } from "@/lib/services/feature-flags"
 import { Separator } from "@/components/ui/separator"
@@ -76,6 +76,33 @@ export default async function AdminSettingsPage() {
                             <Button asChild variant="outline">
                                 <Link href="/admin/settings/legal">
                                     Gérer les pages
+                                </Link>
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center space-x-2">
+                            <Building2 className="h-5 w-5 text-primary" />
+                            <CardTitle>Identité & Contact</CardTitle>
+                        </div>
+                        <CardDescription>
+                            SIRET, Adresse, Email de contact et informations légales.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                                <h3 className="font-medium">Fiche Entreprise</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Ces informations apparaissent dans les mentions légales.
+                                </p>
+                            </div>
+                            <Button asChild variant="outline">
+                                <Link href="/admin/settings/company">
+                                    Éditer les infos
                                 </Link>
                             </Button>
                         </div>

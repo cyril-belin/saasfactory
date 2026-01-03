@@ -16,7 +16,8 @@ import {
     Building,
     HardDrive,
     History,
-    ChevronsUpDown
+    ChevronsUpDown,
+    LifeBuoy
 } from 'lucide-react'
 import { signOut } from '@/lib/services/auth-client'
 import { toast } from 'sonner'
@@ -52,6 +53,7 @@ export function Sidebar({ user, showWorkspaceSwitcher, showStorage, showChangelo
         { name: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
         ...(showStorage ? [{ name: 'Stockage', href: '/dashboard/feature/storage', icon: HardDrive }] : []),
         ...(showChangelog ? [{ name: 'Changelog', href: '/dashboard/changelog', icon: History }] : []),
+        { name: 'Support', href: '/dashboard/support', icon: LifeBuoy },
         { name: 'Ma Feature', href: '/dashboard/feature', icon: LayoutDashboard }, // Placeholder
         { name: 'Paramètres', href: '/dashboard/settings', icon: Settings },
     ]

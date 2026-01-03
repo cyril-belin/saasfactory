@@ -12,7 +12,8 @@ import {
     Settings,
     Shield,
     Flag,
-    CreditCard
+    CreditCard,
+    LifeBuoy
 } from 'lucide-react'
 
 const adminRoutes = [
@@ -51,6 +52,12 @@ const adminRoutes = [
         icon: CreditCard,
         href: '/admin/plans',
         color: 'text-blue-500',
+    },
+    {
+        label: 'Support',
+        icon: LifeBuoy,
+        href: '/admin/support',
+        color: 'text-amber-500',
     },
     {
         label: 'Paramètres',
