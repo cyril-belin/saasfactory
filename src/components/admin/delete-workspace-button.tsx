@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { deleteWorkspaceAction } from "@/app/admin/actions"
 import { toast } from "sonner"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
 interface DeleteWorkspaceButtonProps {
@@ -26,7 +26,12 @@ interface DeleteWorkspaceButtonProps {
 
 export function DeleteWorkspaceButton({ workspaceId, workspaceName }: DeleteWorkspaceButtonProps) {
     const [isLoading, setIsLoading] = useState(false)
+    const [mounted, setMounted] = useState(false)
     const router = useRouter()
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const handleDelete = async () => {
         setIsLoading(true)
@@ -52,20 +57,22 @@ export function DeleteWorkspaceButton({ workspaceId, workspaceName }: DeleteWork
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Cette action est irréversible. Le workspace <strong>{workspaceName}</strong> et toutes ses données seront supprimés définitivement.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Annuler</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-                        {isLoading ? "Suppression..." : "Supprimer"}
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
+            {mounted && (
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Cette action est irréversible. Le workspace <strong>{workspaceName}</strong> et toutes ses données seront supprimés définitivement.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+                            {isLoading ? "Suppression..." : "Supprimer"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            )}
         </AlertDialog>
     )
 }

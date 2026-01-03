@@ -1,6 +1,6 @@
-// src/app/admin/feature-flags/page.tsx
 import { getAllFeatureFlags } from "@/lib/services/feature-flags"
 import { FeatureFlagToggle } from "@/components/admin/feature-flag-toggle"
+import { FeatureFlagValueInput } from "@/components/admin/feature-flag-value-input"
 import {
     Table,
     TableBody,
@@ -11,8 +11,6 @@ import {
 } from "@/components/ui/table"
 
 export const dynamic = 'force-dynamic'
-
-type FeatureFlag = Awaited<ReturnType<typeof getAllFeatureFlags>>[number]
 
 export default async function FeatureFlagsPage() {
     const flags = await getAllFeatureFlags()
@@ -33,15 +31,27 @@ export default async function FeatureFlagsPage() {
                             <TableHead>Nom</TableHead>
                             <TableHead>Clé</TableHead>
                             <TableHead>Description</TableHead>
+                            <TableHead>ID / Configuration</TableHead>
                             <TableHead>État</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {flags.map((flag: FeatureFlag) => (
+                        {flags.map((flag) => (
                             <TableRow key={flag.key}>
                                 <TableCell className="font-medium">{flag.name}</TableCell>
                                 <TableCell className="font-mono text-sm">{flag.key}</TableCell>
-                                <TableCell className="text-muted-foreground">{flag.description}</TableCell>
+                                <TableCell className="text-muted-foreground max-w-xs truncate">{flag.description}</TableCell>
+                                <TableCell>
+                                    {flag.key === 'analytics' ? (
+                                        <FeatureFlagValueInput
+                                            flagKey={flag.key}
+                                            initialValue={(flag as any).value}
+                                            placeholder="G-XXXXXXXXXX"
+                                        />
+                                    ) : (
+                                        <span className="text-muted-foreground text-sm">-</span>
+                                    )}
+                                </TableCell>
                                 <TableCell>
                                     <FeatureFlagToggle flagKey={flag.key} initialValue={flag.enabled} />
                                 </TableCell>
@@ -49,7 +59,7 @@ export default async function FeatureFlagsPage() {
                         ))}
                         {flags.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                                <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
                                     Aucun feature flag trouvé.
                                 </TableCell>
                             </TableRow>

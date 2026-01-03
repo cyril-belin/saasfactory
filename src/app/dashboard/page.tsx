@@ -4,9 +4,11 @@ import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { StatsCard } from '@/components/dashboard/stats-card'
 import { ChangelogWidget } from '@/components/dashboard/changelog-widget'
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
-import { Building, CreditCard, Users, ArrowRight } from 'lucide-react'
+import { DashboardGrid } from '@/components/dashboard/dashboard-grid'
+import { QuickActionsWidget, QuickAction } from '@/components/dashboard/widgets/quick-actions-widget'
+import { StorageWidget } from '@/components/dashboard/widgets/storage-widget'
+import { Building, CreditCard, Users, UserPlus, FileText, Settings, UploadCloud } from 'lucide-react'
+import { isFeatureEnabled } from '@/lib/services/feature-flags'
 
 export default async function DashboardPage() {
     const supabase = await createClient()
@@ -33,6 +35,51 @@ export default async function DashboardPage() {
 
     const currentWorkspace = workspaces[0]
 
+    // Fetch Feature Flags
+    const isChangelogEnabled = await isFeatureEnabled('changelog_in_app')
+    const isStorageEnabled = await isFeatureEnabled('storage')
+
+    // Fetch Current Plan details if exists
+    let planName = 'Plan Gratuit'
+    if (currentWorkspace?.stripePriceId) {
+        const plan = await prisma.subscriptionPlan.findUnique({
+            where: { priceId: currentWorkspace.stripePriceId }
+        })
+        if (plan) planName = plan.name
+    }
+
+    // Quick Actions Configuration
+    const quickActions: QuickAction[] = [
+        {
+            label: "Gérer l'équipe",
+            href: "/dashboard/settings/workspace",
+            icon: UserPlus,
+            variant: "outline"
+        },
+        {
+            label: "Mon Abonnement",
+            href: "/dashboard/settings/billing",
+            icon: CreditCard,
+            variant: "outline"
+        },
+        {
+            label: "Paramètres",
+            href: "/dashboard/settings",
+            icon: Settings,
+            variant: "ghost"
+        }
+    ]
+
+    // Add storage action if enabled
+    if (isStorageEnabled) {
+        quickActions.unshift({
+            label: "Mes Fichiers",
+            href: "/dashboard/storage",
+            icon: UploadCloud,
+            variant: "default"
+        })
+    }
+
     return (
         <div className="space-y-8">
             <div className="flex flex-col gap-2">
@@ -54,7 +101,7 @@ export default async function DashboardPage() {
                 </div>
             ) : (
                 <>
-                    {/* Stats */}
+                    {/* Key Metrics Row */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <StatsCard
                             title="Workspace"
@@ -63,47 +110,43 @@ export default async function DashboardPage() {
                             description="Espace de travail actif"
                         />
                         <StatsCard
-                            title="Statut Abonnement"
-                            value={currentWorkspace.subscriptionStatus === 'ACTIVE' ? 'Actif' : 'Inactif'}
+                            title="Abonnement"
+                            value={currentWorkspace.subscriptionStatus === 'ACTIVE' ? planName : 'Gratuit'}
                             icon={CreditCard}
-                            description={currentWorkspace.subscriptionStatus === 'ACTIVE' ? 'Plan Pro' : 'Plan Gratuit (ou expiré)'}
+                            description={currentWorkspace.subscriptionStatus === 'ACTIVE' ? 'Abonnement actif' : 'Pas d\'abonnement actif'}
                         />
                         <StatsCard
                             title="Membres"
-                            value={currentWorkspace.members.length + 1} // +1 for owner (if not in members table logic)
+                            value={currentWorkspace.members.length + 1}
                             icon={Users}
                             description="Utilisateurs dans cet espace"
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div className="lg:col-span-2 space-y-6">
-                            {/* Main Feature CTA Area */}
-                            <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl p-8 border border-primary/20">
-                                <h2 className="text-2xl font-bold mb-2">Prêt à commencer ?</h2>
-                                <p className="text-gray-600 mb-6 max-w-xl">
-                                    Configurez votre première fonctionnalité ou explorez les réglages de votre workspace dès maintenant.
-                                </p>
-                                <div className="flex gap-4">
-                                    <Button asChild size="lg">
-                                        <Link href="/dashboard/feature">
-                                            Accéder à ma Feature <ArrowRight className="ml-2 h-4 w-4" />
-                                        </Link>
-                                    </Button>
-                                    <Button variant="outline" size="lg" asChild>
-                                        <Link href="/dashboard/settings/workspace">
-                                            Configurer le Workspace
-                                        </Link>
-                                    </Button>
-                                </div>
-                            </div>
+                    {/* Modular Widget Grid */}
+                    <DashboardGrid>
+                        {/* Quick Actions - Always visible */}
+                        <div className="col-span-1 md:col-span-2 lg:col-span-1">
+                            <QuickActionsWidget actions={quickActions} />
                         </div>
 
-                        <div className="lg:col-span-1">
-                            {/* Changelog */}
-                            <ChangelogWidget userId={user.id} />
-                        </div>
-                    </div>
+                        {/* Storage Widget - Conditional */}
+                        {isStorageEnabled && (
+                            <div className="col-span-1">
+                                <StorageWidget
+                                    usedBytes={1024 * 1024 * 350} // TODO: Fetch real usage
+                                    totalBytes={1024 * 1024 * 1024} // 1GB Limit
+                                />
+                            </div>
+                        )}
+
+                        {/* Changelog Widget - Conditional */}
+                        {isChangelogEnabled && (
+                            <div className="col-span-1 md:col-span-2 lg:col-span-1">
+                                <ChangelogWidget userId={user.id} />
+                            </div>
+                        )}
+                    </DashboardGrid>
                 </>
             )}
         </div>

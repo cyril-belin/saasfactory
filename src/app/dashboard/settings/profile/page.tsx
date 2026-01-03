@@ -1,7 +1,7 @@
 // src/app/dashboard/settings/profile/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
@@ -65,6 +65,20 @@ export default function ProfileSettingsPage() {
             setIsLoading(false)
         }
     }
+
+    // Fetch user data on mount
+    useEffect(() => {
+        const fetchUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+                form.reset({
+                    email: user.email || "",
+                    fullName: user.user_metadata?.full_name || "",
+                })
+            }
+        }
+        fetchUser()
+    }, [form, supabase.auth])
 
     return (
         <div className="space-y-6">

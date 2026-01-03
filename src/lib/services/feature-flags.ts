@@ -1,16 +1,17 @@
 // src/lib/services/feature-flags.ts
 
 import { prisma } from '@/lib/prisma'
+import { FeatureFlag } from '@prisma/client'
 
 // Cache with TTL to reduce DB load
 const CACHE_TTL = 60 * 1000 // 60 seconds
-const flagCache = new Map<string, { value: boolean; expires: number }>()
+const flagCache = new Map<string, { data: any; expires: number }>()
 
 export async function isFeatureEnabled(key: string): Promise<boolean> {
     // Check cache first
     const cached = flagCache.get(key)
     if (cached && cached.expires > Date.now()) {
-        return cached.value
+        return cached.data.enabled
     }
 
     // Fetch from DB
@@ -18,15 +19,36 @@ export async function isFeatureEnabled(key: string): Promise<boolean> {
         where: { key },
     })
 
-    const value = flag?.enabled ?? false
+    const data = flag || { enabled: false, value: null }
 
     // Update cache
     flagCache.set(key, {
-        value,
+        data,
         expires: Date.now() + CACHE_TTL,
     })
 
-    return value
+    return data.enabled
+}
+
+export async function getFeatureFlag(key: string) {
+    // Check cache first
+    const cached = flagCache.get(key)
+    if (cached && cached.expires > Date.now()) {
+        return cached.data
+    }
+
+    const flag = await prisma.featureFlag.findUnique({
+        where: { key },
+    })
+
+    if (flag) {
+        flagCache.set(key, {
+            data: flag,
+            expires: Date.now() + CACHE_TTL,
+        })
+    }
+
+    return flag
 }
 
 export async function getAllFeatureFlags() {
@@ -51,6 +73,15 @@ export async function toggleFeatureFlag(key: string): Promise<boolean> {
     flagCache.delete(key)
 
     return updated.enabled
+}
+
+export async function updateFeatureFlagValue(key: string, value: string | null) {
+    const updated = await prisma.featureFlag.update({
+        where: { key },
+        data: { value } as any,
+    })
+    flagCache.delete(key)
+    return updated
 }
 
 export function clearFeatureFlagCache(key?: string) {

@@ -31,10 +31,10 @@ export function MainFeature() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Wand2 className="h-5 w-5 text-primary" />
-                        Générateur Magique
+                        Fonctionnalité Principale (Template)
                     </CardTitle>
                     <CardDescription>
-                        Ceci est un exemple de fonctionnalité principale pour votre SaaS.
+                        C'est ici que vous implémenterez le cœur de votre SaaS.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">

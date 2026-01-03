@@ -11,7 +11,8 @@ import {
     Megaphone,
     Settings,
     Shield,
-    Flag
+    Flag,
+    CreditCard
 } from 'lucide-react'
 
 const adminRoutes = [
@@ -44,6 +45,12 @@ const adminRoutes = [
         icon: Flag,
         href: '/admin/feature-flags',
         color: 'text-emerald-500',
+    },
+    {
+        label: 'Abonnements',
+        icon: CreditCard,
+        href: '/admin/plans',
+        color: 'text-blue-500',
     },
     {
         label: 'Paramètres',

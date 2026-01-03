@@ -25,12 +25,29 @@ export async function POST(req: Request) {
             return new NextResponse('Unauthorized Workspace Access', { status: 403 })
         }
 
-        if (!workspace.stripeCustomerId) {
-            return new NextResponse('No Stripe Customer Found', { status: 400 })
+        // If no Stripe Customer ID, create one
+        let customerId = workspace.stripeCustomerId
+
+        if (!customerId) {
+            console.log('Creating Stripe Customer for workspace:', workspaceId)
+            const customer = await stripe.customers.create({
+                email: user.email!,
+                name: workspace.name,
+                metadata: {
+                    workspaceId: workspaceId,
+                }
+            })
+
+            customerId = customer.id
+
+            await prisma.workspace.update({
+                where: { id: workspaceId },
+                data: { stripeCustomerId: customerId }
+            })
         }
 
         const session = await stripe.billingPortal.sessions.create({
-            customer: workspace.stripeCustomerId,
+            customer: customerId,
             return_url: `${APP_URL}/dashboard/settings/billing`,
         })
 

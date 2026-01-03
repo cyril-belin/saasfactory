@@ -3,6 +3,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { WorkspaceSwitcher } from './workspace-switcher'
 import { Button } from '@/components/ui/button'
@@ -12,7 +13,10 @@ import {
     LogOut,
     CreditCard,
     User,
-    Building
+    Building,
+    HardDrive,
+    History,
+    ChevronsUpDown
 } from 'lucide-react'
 import { signOut } from '@/lib/services/auth-client'
 import { toast } from 'sonner'
@@ -31,14 +35,23 @@ import {
 interface SidebarProps {
     user: any
     showWorkspaceSwitcher: boolean
+    showStorage?: boolean
+    showChangelog?: boolean
 }
 
-export function Sidebar({ user, showWorkspaceSwitcher }: SidebarProps) {
+export function Sidebar({ user, showWorkspaceSwitcher, showStorage, showChangelog }: SidebarProps) {
     const pathname = usePathname()
     const router = useRouter()
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const navigation = [
         { name: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
+        ...(showStorage ? [{ name: 'Stockage', href: '/dashboard/feature/storage', icon: HardDrive }] : []),
+        ...(showChangelog ? [{ name: 'Changelog', href: '/dashboard/changelog', icon: History }] : []),
         { name: 'Ma Feature', href: '/dashboard/feature', icon: LayoutDashboard }, // Placeholder
         { name: 'Paramètres', href: '/dashboard/settings', icon: Settings },
     ]
@@ -71,7 +84,10 @@ export function Sidebar({ user, showWorkspaceSwitcher }: SidebarProps) {
             {/* Navigation */}
             <nav className="flex-1 space-y-1">
                 {navigation.map((item) => {
-                    const isActive = pathname === item.href
+                    // Check if active: exact match or starts with for nested routes (except root dashboard)
+                    const isActive = item.href === '/dashboard'
+                        ? pathname === item.href
+                        : pathname.startsWith(item.href)
                     return (
                         <Link
                             key={item.name}
@@ -105,46 +121,47 @@ export function Sidebar({ user, showWorkspaceSwitcher }: SidebarProps) {
                             </div>
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56" align="end" forceMount>
-                        <DropdownMenuLabel className="font-normal">
-                            <div className="flex flex-col space-y-1">
-                                <p className="text-sm font-medium leading-none">{user.email?.split('@')[0]}</p>
-                                <p className="text-xs leading-none text-muted-foreground">
-                                    {user.email}
-                                </p>
-                            </div>
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuGroup>
-                            <DropdownMenuItem asChild>
-                                <Link href="/dashboard/settings/profile">
-                                    <User className="mr-2 h-4 w-4" />
-                                    <span>Profil</span>
-                                </Link>
+                    {mounted && (
+                        <DropdownMenuContent className="w-56" align="end" forceMount>
+                            <DropdownMenuLabel className="font-normal">
+                                <div className="flex flex-col space-y-1">
+                                    <p className="text-sm font-medium leading-none">{user.email?.split('@')[0]}</p>
+                                    <p className="text-xs leading-none text-muted-foreground">
+                                        {user.email}
+                                    </p>
+                                </div>
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuGroup>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/dashboard/settings/profile">
+                                        <User className="mr-2 h-4 w-4" />
+                                        <span>Profil</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/dashboard/settings/billing">
+                                        <CreditCard className="mr-2 h-4 w-4" />
+                                        <span>Facturation</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/dashboard/settings/workspace">
+                                        <Building className="mr-2 h-4 w-4" />
+                                        <span>Workspace</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                            </DropdownMenuGroup>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={handleSignOut} className="text-red-600 focus:text-red-600">
+                                <LogOut className="mr-2 h-4 w-4" />
+                                <span>Se déconnecter</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link href="/dashboard/settings/billing">
-                                    <CreditCard className="mr-2 h-4 w-4" />
-                                    <span>Facturation</span>
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link href="/dashboard/settings/workspace">
-                                    <Building className="mr-2 h-4 w-4" />
-                                    <span>Workspace</span>
-                                </Link>
-                            </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleSignOut} className="text-red-600 focus:text-red-600">
-                            <LogOut className="mr-2 h-4 w-4" />
-                            <span>Se déconnecter</span>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
+                        </DropdownMenuContent>
+                    )}
                 </DropdownMenu>
             </div>
         </aside>
     )
 }
 
-import { ChevronsUpDown } from 'lucide-react'

@@ -31,6 +31,12 @@ async function main() {
       description: 'Enable file upload and storage features',
       enabled: true,
     },
+    {
+      key: 'maintenance_mode',
+      name: 'Maintenance Mode',
+      description: "Si activé, l'application ne sera accessible qu'aux administrateurs.",
+      enabled: false,
+    },
   ]
 
   for (const flag of flags) {

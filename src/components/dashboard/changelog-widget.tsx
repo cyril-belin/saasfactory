@@ -1,35 +1,17 @@
 // src/components/dashboard/changelog-widget.tsx
 
-'use client'
-
-import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from 'next/link'
 import { Bell } from 'lucide-react'
+import { getRecentAnnouncements } from '@/lib/services/announcements'
+import { isFeatureEnabled } from '@/lib/services/feature-flags'
 
-// Placeholder type
-type Announcement = {
-    id: string
-    title: string
-    content: string
-    publishedAt: Date
-}
+export async function ChangelogWidget({ userId }: { userId: string }) {
+    const isEnabled = await isFeatureEnabled('changelog_in_app')
 
-export function ChangelogWidget({ userId }: { userId: string }) {
-    const [announcements, setAnnouncements] = useState<Announcement[]>([])
+    if (!isEnabled) return null
 
-    // TODO: Fetch real announcements
-    useEffect(() => {
-        // Mock data
-        setAnnouncements([
-            {
-                id: '1',
-                title: 'Bienvenue sur la plateforme !',
-                content: 'Découvrez nos nouvelles fonctionnalités...',
-                publishedAt: new Date(),
-            }
-        ])
-    }, [userId])
+    const announcements = await getRecentAnnouncements()
 
     return (
         <Card>
@@ -57,7 +39,7 @@ export function ChangelogWidget({ userId }: { userId: string }) {
                     )}
                 </div>
                 <div className="mt-4 pt-2 border-t text-center">
-                    <Link href="/changelog" className="text-xs text-primary hover:underline">
+                    <Link href="/dashboard/changelog" className="text-xs text-primary hover:underline">
                         Voir tout l'historique
                     </Link>
                 </div>
@@ -65,3 +47,4 @@ export function ChangelogWidget({ userId }: { userId: string }) {
         </Card>
     )
 }
+

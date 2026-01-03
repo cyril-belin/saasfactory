@@ -117,6 +117,7 @@ model FeatureFlag {
   name        String
   description String?
   enabled     Boolean  @default(false)
+  value       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
@@ -158,4 +159,39 @@ enum AnnouncementType {
   UPDATE
   FIX
   ANNOUNCEMENT
+}
+
+// ============================================
+// LEGAL PAGES (CMS)
+// ============================================
+model LegalPage {
+  id          String   @id @default(uuid())
+  slug        String   @unique // terms, privacy, cookies
+  title       String
+  content     String   @db.Text
+  isPublished Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  
+  @@index([slug])
+}
+
+// ============================================
+// SUBSCRIPTIONS (SaaS Factory)
+// ============================================
+model SubscriptionPlan {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  priceId     String   @unique // Stripe Price ID (e.g. price_123)
+  amount      Float    // Amount in cents (e.g. 2900)
+  currency    String   @default("eur")
+  interval    String   @default("month") // month, year, one_time
+  features    String[] // List of features
+  isActive    Boolean  @default(true)
+  popular     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
 }
