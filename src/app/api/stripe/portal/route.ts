@@ -29,7 +29,6 @@ export async function POST(req: Request) {
         let customerId = workspace.stripeCustomerId
 
         if (!customerId) {
-            console.log('Creating Stripe Customer for workspace:', workspaceId)
             const customer = await stripe.customers.create({
                 email: user.email!,
                 name: workspace.name,

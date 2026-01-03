@@ -42,7 +42,6 @@ export async function middleware(request: NextRequest) {
         const userEmail = session.user.email?.trim().toLowerCase() || ''
 
         if (!adminEmails.includes(userEmail)) {
-            console.log(`Access denied to /admin for user ${userEmail}`)
             return NextResponse.redirect(new URL('/dashboard', request.url))
         }
     }
