@@ -12,177 +12,105 @@ import {
 } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-    CommandSeparator,
-} from "@/components/ui/command"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
-import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
+import { useWorkspace } from "@/contexts/workspace-context"
+import { toast } from "sonner"
 
 type Workspace = {
     id: string
     name: string
     slug: string
-    logo?: string
-    plan?: string
+    ownerId: string
+    // add other fields as needed
 }
 
-const mockWorkspaces: Workspace[] = [
-    {
-        id: "1",
-        name: "Acme Inc",
-        slug: "acme-inc",
-        plan: "Pro",
-    },
-    {
-        id: "2",
-        name: "Monsters Inc",
-        slug: "monsters-inc",
-        plan: "Free",
-    },
-]
+interface WorkspaceSwitcherProps extends React.HTMLAttributes<HTMLDivElement> {
+    workspaces: Workspace[]
+}
 
-// TODO: Replace with real data logic
 export function WorkspaceSwitcher({
     className,
-}: React.HTMLAttributes<HTMLDivElement>) {
+    workspaces = []
+}: WorkspaceSwitcherProps) {
     const [open, setOpen] = React.useState(false)
-    const [showNewWorkspaceDialog, setShowNewWorkspaceDialog] = React.useState(false)
-    const [selectedWorkspace, setSelectedWorkspace] = React.useState<Workspace>(
-        mockWorkspaces[0]
-    )
+    const { workspace: selectedWorkspace, setWorkspace } = useWorkspace()
+
+    const handleSelect = (workspace: Workspace) => {
+        setWorkspace(workspace)
+        setOpen(false)
+
+        // Persist choice via cookie
+        document.cookie = `workspaceId=${workspace.id}; path=/; max-age=31536000` // 1 year
+
+        // Optional: refresh page to ensure server context updates if needed,
+        // but since we use Client Context, it might be fine.
+        // However, if other server components rely on the cookie, we might want to refresh.
+        // router.refresh()
+    }
+
+    if (!selectedWorkspace) return null
 
     return (
-        <Dialog open={showNewWorkspaceDialog} onOpenChange={setShowNewWorkspaceDialog}>
-            <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                    <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={open}
-                        aria-label="Select a workspace"
-                        className={cn("w-full justify-between", className)}
-                    >
-                        <Avatar className="mr-2 h-5 w-5">
-                            <AvatarImage
-                                src={`https://avatar.vercel.sh/${selectedWorkspace.slug}.png`}
-                                alt={selectedWorkspace.name}
-                            />
-                            <AvatarFallback>SC</AvatarFallback>
-                        </Avatar>
-                        {selectedWorkspace.name}
-                        <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[200px] p-0">
-                    {/* Note: Command components need to be installed or replaced with simple list if cmbk not used */}
-                    <div className="p-2">
-                        <div className="text-xs font-medium text-muted-foreground px-2 py-1.5">
-                            Workspaces
-                        </div>
-                        {mockWorkspaces.map((workspace) => (
-                            <div
-                                key={workspace.id}
-                                onClick={() => {
-                                    setSelectedWorkspace(workspace)
-                                    setOpen(false)
-                                }}
-                                className="flex items-center px-2 py-1.5 text-sm rounded-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
-                            >
-                                <Avatar className="mr-2 h-5 w-5">
-                                    <AvatarImage
-                                        src={`https://avatar.vercel.sh/${workspace.slug}.png`}
-                                        alt={workspace.name}
-                                    />
-                                    <AvatarFallback>SC</AvatarFallback>
-                                </Avatar>
-                                {workspace.name}
-                                {selectedWorkspace.id === workspace.id && (
-                                    <Check className="ml-auto h-4 w-4" />
-                                )}
-                            </div>
-                        ))}
-                        <div className="h-px bg-border my-1" />
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    aria-label="Select a workspace"
+                    className={cn("w-full justify-between", className)}
+                >
+                    <Avatar className="mr-2 h-5 w-5">
+                        <AvatarImage
+                            src={`https://avatar.vercel.sh/${selectedWorkspace.slug}.png`}
+                            alt={selectedWorkspace.name}
+                        />
+                        <AvatarFallback>{selectedWorkspace.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <span className="truncate">{selectedWorkspace.name}</span>
+                    <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-0">
+                <div className="p-2">
+                    <div className="text-xs font-medium text-muted-foreground px-2 py-1.5">
+                        Workspaces
+                    </div>
+                    {workspaces.map((workspace) => (
                         <div
-                            onClick={() => {
-                                setOpen(false)
-                                setShowNewWorkspaceDialog(true)
-                            }}
+                            key={workspace.id}
+                            onClick={() => handleSelect(workspace)}
                             className="flex items-center px-2 py-1.5 text-sm rounded-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
                         >
-                            <PlusCircle className="mr-2 h-5 w-5" />
-                            Create Workspace
+                            <Avatar className="mr-2 h-5 w-5">
+                                <AvatarImage
+                                    src={`https://avatar.vercel.sh/${workspace.slug}.png`}
+                                    alt={workspace.name}
+                                />
+                                <AvatarFallback>{workspace.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <span className="truncate flex-1">{workspace.name}</span>
+                            {selectedWorkspace.id === workspace.id && (
+                                <Check className="ml-auto h-4 w-4" />
+                            )}
                         </div>
-                    </div>
-                </PopoverContent>
-            </Popover>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Create workspace</DialogTitle>
-                    <DialogDescription>
-                        Add a new workspace to manage products and customers.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-2 pb-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="name">Workspace name</Label>
-                        <Input id="name" placeholder="Acme Inc." />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="plan">Subscription plan</Label>
-                        <Select>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a plan" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="free">
-                                    <span className="font-medium">Free</span> -{" "}
-                                    <span className="text-muted-foreground">
-                                        Trial for two weeks
-                                    </span>
-                                </SelectItem>
-                                <SelectItem value="pro">
-                                    <span className="font-medium">Pro</span> -{" "}
-                                    <span className="text-muted-foreground">
-                                        $9/month per user
-                                    </span>
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
+                    ))}
+                    <div className="h-px bg-border my-1" />
+                    <div
+                        onClick={() => {
+                            setOpen(false)
+                            toast.info("La création de workspace sera bientôt disponible.")
+                        }}
+                        className="flex items-center px-2 py-1.5 text-sm rounded-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                    >
+                        <PlusCircle className="mr-2 h-5 w-5" />
+                        Create Workspace
                     </div>
                 </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowNewWorkspaceDialog(false)}>
-                        Cancel
-                    </Button>
-                    <Button type="submit">Continue</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+            </PopoverContent>
+        </Popover>
     )
 }

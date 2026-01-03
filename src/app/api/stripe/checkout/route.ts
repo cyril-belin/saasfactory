@@ -53,7 +53,7 @@ export async function POST(req: Request) {
             payment_method_types: ['card'],
             line_items: [
                 {
-                    price: priceId || 'price_PLACEHOLDER', // Fallback for dev without keys
+                    price: priceId,
                     quantity: 1,
                 },
             ],
