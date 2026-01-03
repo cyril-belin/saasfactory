@@ -12,7 +12,7 @@ const legalPageSchema = z.object({
 
 export async function getLegalPage(slug: string) {
     try {
-        const page = await (prisma as any).legalPage.findUnique({
+        const page = await prisma.legalPage.findUnique({
             where: { slug },
         })
         return { data: page }
@@ -23,7 +23,7 @@ export async function getLegalPage(slug: string) {
 
 export async function getAllLegalPages() {
     try {
-        const pages = await (prisma as any).legalPage.findMany({
+        const pages = await prisma.legalPage.findMany({
             orderBy: { title: 'asc' }
         })
         return { data: pages }
@@ -33,13 +33,10 @@ export async function getAllLegalPages() {
 }
 
 export async function updateLegalPage(slug: string, formData: FormData) {
-    console.log(`UPDATING LEGAL PAGE: ${slug}`)
     try {
         const title = formData.get('title') as string
         const content = formData.get('content') as string
         const isPublished = formData.get('isPublished') === 'on'
-
-        console.log(`FIELDS: title=${title}, published=${isPublished}`)
 
         const validatedFields = legalPageSchema.safeParse({
             title,
@@ -54,7 +51,7 @@ export async function updateLegalPage(slug: string, formData: FormData) {
 
         const data = validatedFields.data
 
-        const result = await (prisma as any).legalPage.upsert({
+        await prisma.legalPage.upsert({
             where: { slug },
             update: {
                 title: data.title,
@@ -68,8 +65,6 @@ export async function updateLegalPage(slug: string, formData: FormData) {
                 isPublished: data.isPublished,
             },
         })
-
-        console.log(`SUCCESSFULLY SAVED: ${result.slug}`)
 
         revalidatePath('/admin/settings/legal')
         revalidatePath(`/admin/settings/legal/${slug}`)

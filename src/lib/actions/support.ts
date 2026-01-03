@@ -55,7 +55,7 @@ export async function getUserTickets() {
 }
 
 export async function getAllTickets() {
-    // TODO: Add admin check here
+    // Admin check using env vars
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -63,8 +63,11 @@ export async function getAllTickets() {
         throw new Error('Unauthorized')
     }
 
-    // Basic admin check (should match middleware or centralized admin check)
-    if (user.email !== 'ecupower@gmail.com') {
+    const adminEmailsString = process.env.ADMIN_EMAILS || ''
+    const adminEmails = adminEmailsString.split(',').map(email => email.trim().toLowerCase())
+    const userEmail = user.email?.trim().toLowerCase() || ''
+
+    if (!adminEmails.includes(userEmail)) {
         throw new Error('Forbidden')
     }
 
@@ -97,8 +100,12 @@ export async function getTicketById(id: string) {
 
     if (!ticket) return null
 
+    const adminEmailsString = process.env.ADMIN_EMAILS || ''
+    const adminEmails = adminEmailsString.split(',').map(email => email.trim().toLowerCase())
+    const userEmail = user.email?.trim().toLowerCase() || ''
+    const isAdmin = adminEmails.includes(userEmail)
+
     // Authorization check: User must own ticket OR be admin
-    const isAdmin = user.email === 'ecupower@gmail.com'
     if (ticket.userId !== user.id && !isAdmin) {
         throw new Error('Forbidden')
     }
@@ -110,7 +117,15 @@ export async function updateTicketStatus(data: UpdateTicketStatusData) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user || user.email !== 'ecupower@gmail.com') {
+    if (!user) {
+        throw new Error('Unauthorized')
+    }
+
+    const adminEmailsString = process.env.ADMIN_EMAILS || ''
+    const adminEmails = adminEmailsString.split(',').map(email => email.trim().toLowerCase())
+    const userEmail = user.email?.trim().toLowerCase() || ''
+
+    if (!adminEmails.includes(userEmail)) {
         throw new Error('Forbidden')
     }
 

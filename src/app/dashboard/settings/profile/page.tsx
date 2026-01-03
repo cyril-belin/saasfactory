@@ -32,15 +32,14 @@ const profileFormSchema = z.object({
 export default function ProfileSettingsPage() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
+    const [isFetching, setIsFetching] = useState(true)
     const supabase = createClient()
 
-    // Note: specific data fetching should ideally happen in a parent server component or via useEffect
-    // For now using empty defaults, assuming user data is fetched
     const form = useForm<z.infer<typeof profileFormSchema>>({
         resolver: zodResolver(profileFormSchema),
         defaultValues: {
-            fullName: "", // TODO: Populate with real data
-            email: "",    // TODO: Populate with real data
+            fullName: "",
+            email: "",
         },
     })
 
@@ -69,16 +68,24 @@ export default function ProfileSettingsPage() {
     // Fetch user data on mount
     useEffect(() => {
         const fetchUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (user) {
-                form.reset({
-                    email: user.email || "",
-                    fullName: user.user_metadata?.full_name || "",
-                })
+            try {
+                const { data: { user } } = await supabase.auth.getUser()
+                if (user) {
+                    form.reset({
+                        email: user.email || "",
+                        fullName: user.user_metadata?.full_name || "",
+                    })
+                }
+            } finally {
+                setIsFetching(false)
             }
         }
         fetchUser()
     }, [form, supabase.auth])
+
+    if (isFetching) {
+        return <div className="p-8 text-center text-muted-foreground">Chargement du profil...</div>
+    }
 
     return (
         <div className="space-y-6">

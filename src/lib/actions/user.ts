@@ -38,7 +38,6 @@ export async function syncUser() {
                     subscriptionStatus: 'INACTIVE', // Default to Inactive (Free)
                 },
             })
-            console.log(`[Sync] Created default workspace for ${user.email}`)
         }
     } catch (error) {
         console.error('[Sync] Error syncing user:', error)

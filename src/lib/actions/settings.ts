@@ -3,6 +3,7 @@
 import { updateSystemSetting, SYSTEM_SETTINGS_KEYS } from "@/lib/services/settings"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
+import { createClient } from "@/lib/supabase/server"
 
 const legalSettingsSchema = z.object({
     companyName: z.string().min(1, "Nom de l'entreprise requis"),
@@ -22,6 +23,21 @@ export type ActionState = {
 }
 
 export async function updateLegalSettingsAction(prevState: any, formData: FormData): Promise<ActionState> {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { success: false, error: "Non autorisé" }
+    }
+
+    const adminEmailsString = process.env.ADMIN_EMAILS || ''
+    const adminEmails = adminEmailsString.split(',').map(email => email.trim().toLowerCase())
+    const userEmail = user.email?.trim().toLowerCase() || ''
+
+    if (!adminEmails.includes(userEmail)) {
+        return { success: false, error: "Accès refusé" }
+    }
+
     const data = {
         companyName: formData.get("companyName"),
         siret: formData.get("siret"),

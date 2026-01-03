@@ -28,11 +28,9 @@ export function LegalEditor({
     const [published, setPublished] = useState(initialPublished)
 
     async function onSubmit(formData: FormData) {
-        console.log('Submitting legal page content...')
         startTransition(async () => {
             // Ensure the value is correctly set in formData
             formData.set('isPublished', published ? 'on' : 'off')
-            console.log('FormData isPublished set to:', formData.get('isPublished'))
 
             const result = await updateLegalPage(slug, formData)
 
@@ -40,7 +38,6 @@ export function LegalEditor({
                 console.error('Save failed:', result.error)
                 toast.error(result.error)
             } else {
-                console.log('Save successful')
                 toast.success('Page sauvegardée avec succès')
             }
         })

@@ -44,7 +44,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
-type Workspace = {
+export type Workspace = {
     id: string
     name: string
     slug: string
@@ -52,35 +52,30 @@ type Workspace = {
     plan?: string
 }
 
-const mockWorkspaces: Workspace[] = [
-    {
-        id: "1",
-        name: "Acme Inc",
-        slug: "acme-inc",
-        plan: "Pro",
-    },
-    {
-        id: "2",
-        name: "Monsters Inc",
-        slug: "monsters-inc",
-        plan: "Free",
-    },
-]
+interface WorkspaceSwitcherProps extends React.HTMLAttributes<HTMLDivElement> {
+    workspaces?: Workspace[]
+    currentWorkspace?: Workspace
+}
 
-// TODO: Replace with real data logic
 export function WorkspaceSwitcher({
     className,
-}: React.HTMLAttributes<HTMLDivElement>) {
+    workspaces = [],
+    currentWorkspace
+}: WorkspaceSwitcherProps) {
     const [open, setOpen] = React.useState(false)
     const [showNewWorkspaceDialog, setShowNewWorkspaceDialog] = React.useState(false)
-    const [selectedWorkspace, setSelectedWorkspace] = React.useState<Workspace>(
-        mockWorkspaces[0]
+    const [selectedWorkspace, setSelectedWorkspace] = React.useState<Workspace | undefined>(
+        currentWorkspace || workspaces[0]
     )
     const [mounted, setMounted] = React.useState(false)
 
     React.useEffect(() => {
         setMounted(true)
     }, [])
+
+    if (!selectedWorkspace) {
+        return null // Or a loading state
+    }
 
     return (
         <Dialog open={showNewWorkspaceDialog} onOpenChange={setShowNewWorkspaceDialog}>
@@ -111,7 +106,7 @@ export function WorkspaceSwitcher({
                             <div className="text-xs font-medium text-muted-foreground px-2 py-1.5">
                                 Workspaces
                             </div>
-                            {mockWorkspaces.map((workspace) => (
+                            {workspaces.map((workspace) => (
                                 <div
                                     key={workspace.id}
                                     onClick={() => {
