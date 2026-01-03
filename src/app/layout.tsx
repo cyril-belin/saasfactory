@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner"
 import { Analytics } from "@/components/analytics/Analytics"
+import { theme } from "@/config/theme";
+import { getThemeCss } from "@/lib/theme-utils";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SaaS Factory V2",
-  description: "Micro-SaaS Template Factory",
+  title: theme.app.name,
+  description: theme.app.description,
 };
 
 export default async function RootLayout({
@@ -24,8 +26,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const themeCss = getThemeCss();
+
   return (
     <html lang="fr" className="text-slate-900" suppressHydrationWarning>
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: themeCss }} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
