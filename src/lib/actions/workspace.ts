@@ -174,3 +174,57 @@ export async function getWorkspaceAction(workspaceId: string): Promise<ActionRes
         }
     }
 }
+
+/**
+ * Get all workspaces for the authenticated user
+ */
+export async function getUserWorkspacesAction(): Promise<ActionResponse> {
+    try {
+        // 1. Verify user is authenticated
+        const supabase = await createClient()
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+        if (authError || !user) {
+            return {
+                success: false,
+                message: 'Non authentifié.',
+            }
+        }
+
+        // 2. Fetch user's workspaces
+        const workspaces = await prisma.workspace.findMany({
+            where: {
+                OR: [
+                    { ownerId: user.id },
+                    {
+                        members: {
+                            some: {
+                                userId: user.id,
+                            },
+                        },
+                    },
+                ],
+            },
+            include: {
+                owner: {
+                    select: {
+                        id: true,
+                        email: true,
+                    },
+                },
+            },
+        })
+
+        return {
+            success: true,
+            message: 'Workspaces récupérés.',
+            data: workspaces,
+        }
+    } catch (error) {
+        console.error('Error fetching workspaces:', error)
+        return {
+            success: false,
+            message: 'Erreur lors de la récupération des workspaces.',
+        }
+    }
+}

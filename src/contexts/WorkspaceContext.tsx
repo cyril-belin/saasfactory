@@ -1,8 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { getUserWorkspaces } from '@/lib/services/workspace'
+import { getUserWorkspacesAction } from '@/lib/actions/workspace'
 
 interface Workspace {
     id: string
@@ -33,21 +32,16 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         async function loadWorkspaces() {
             try {
-                const supabase = createClient()
-                const { data: { user } } = await supabase.auth.getUser()
+                // Fetch user's workspaces using server action
+                const result = await getUserWorkspacesAction()
 
-                if (!user) {
-                    setIsLoading(false)
-                    return
-                }
+                if (result.success && result.data) {
+                    setWorkspaces(result.data as Workspace[])
 
-                // Fetch user's workspaces
-                const userWorkspaces = await getUserWorkspaces(user.id)
-                setWorkspaces(userWorkspaces as Workspace[])
-
-                // Set first workspace as active by default
-                if (userWorkspaces.length > 0 && !activeWorkspace) {
-                    setActiveWorkspace(userWorkspaces[0] as Workspace)
+                    // Set first workspace as active by default
+                    if (result.data.length > 0 && !activeWorkspace) {
+                        setActiveWorkspace(result.data[0] as Workspace)
+                    }
                 }
             } catch (error) {
                 console.error('Error loading workspaces:', error)
@@ -58,6 +52,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
         loadWorkspaces()
     }, [])
+
 
     return (
         <WorkspaceContext.Provider
