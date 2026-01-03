@@ -42,7 +42,7 @@ export function CompanySettingsForm({ settings }: Props) {
         <form action={formAction}>
             <Card>
                 <CardHeader>
-                    <CardTitle>Informations de l'entreprise</CardTitle>
+                    <CardTitle>Informations de l&apos;entreprise</CardTitle>
                     <CardDescription>
                         Ces informations sont utilisées dans les mentions légales et le pied de page.
                     </CardDescription>
@@ -50,7 +50,7 @@ export function CompanySettingsForm({ settings }: Props) {
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="companyName">Nom de l'entreprise</Label>
+                            <Label htmlFor="companyName">Nom de l&apos;entreprise</Label>
                             <Input id="companyName" name="companyName" defaultValue={settings.companyName} required />
                         </div>
                         <div className="space-y-2">
@@ -77,17 +77,17 @@ export function CompanySettingsForm({ settings }: Props) {
                 <CardHeader>
                     <CardTitle>Hébergeur</CardTitle>
                     <CardDescription>
-                        Informations obligatoires sur l'hébergeur du site.
+                        Informations obligatoires sur l&apos;hébergeur du site.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="hostName">Nom de l'hébergeur</Label>
+                            <Label htmlFor="hostName">Nom de l&apos;hébergeur</Label>
                             <Input id="hostName" name="hostName" defaultValue={settings.hostName} required />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="hostAddress">Adresse de l'hébergeur</Label>
+                            <Label htmlFor="hostAddress">Adresse de l&apos;hébergeur</Label>
                             <Input id="hostAddress" name="hostAddress" defaultValue={settings.hostAddress} required />
                         </div>
                     </div>

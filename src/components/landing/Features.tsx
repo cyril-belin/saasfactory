@@ -40,7 +40,7 @@ export function Features() {
                                         <div className="flex gap-2">
                                             <div className="w-6 h-6 rounded-full bg-muted flex-shrink-0"></div>
                                             <div className="bg-muted/30 p-2 rounded-lg text-xs w-[80%]">
-                                                J'ai un problème avec ma facture du mois de juin.
+                                                J&apos;ai un problème avec ma facture du mois de juin.
                                             </div>
                                         </div>
                                         <div className="flex gap-2 justify-end">
@@ -63,7 +63,7 @@ export function Features() {
                             </div>
                             <h3 className="text-2xl font-semibold mb-3">Changelog & Nouveautés</h3>
                             <p className="text-muted-foreground">
-                                Tenez vos utilisateurs informés des dernières mises à jour directement dans l'application avec le widget Changelog.
+                                Tenez vos utilisateurs informés des dernières mises à jour directement dans l&apos;application avec le widget Changelog.
                             </p>
                         </div>
                         <div className="mt-auto px-8 pb-8 relative h-64">
@@ -129,7 +129,7 @@ export function Features() {
                             </div>
                             <h3 className="text-2xl font-semibold mb-3">Paiements Intégrés</h3>
                             <p className="text-muted-foreground">
-                                Configuration Stripe complète avec gestion des abonnements, factures et portail client prêt à l'emploi.
+                                Configuration Stripe complète avec gestion des abonnements, factures et portail client prêt à l&apos;emploi.
                             </p>
                         </div>
                         <div className="mt-auto px-8 pb-8 relative h-64">
@@ -138,7 +138,7 @@ export function Features() {
                                 <div className="w-full h-full bg-background rounded-lg shadow-sm p-3 flex flex-col items-center justify-center border border-border/50">
                                     <div className="text-3xl font-bold mb-1">99.00€</div>
                                     <div className="text-xs text-muted-foreground mb-4">/ mois</div>
-                                    <div className="w-full h-8 bg-black text-white rounded flex items-center justify-center text-xs font-medium cursor-pointer">S'abonner</div>
+                                    <div className="w-full h-8 bg-black text-white rounded flex items-center justify-center text-xs font-medium cursor-pointer">S&apos;abonner</div>
                                     <div className="mt-4 flex gap-2">
                                         <div className="w-6 h-4 bg-muted rounded"></div>
                                         <div className="w-6 h-4 bg-muted rounded"></div>

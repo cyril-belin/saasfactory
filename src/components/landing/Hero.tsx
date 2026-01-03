@@ -72,7 +72,7 @@ export function Hero() {
                             {/* Mock Main Content */}
                             <div className="flex-1 p-6 flex flex-col gap-6 overflow-hidden bg-background">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-lg font-bold">Vue d'ensemble</h3>
+                                    <h3 className="text-lg font-bold">Vue d&apos;ensemble</h3>
                                     <div className="text-xs text-muted-foreground border px-2 py-1 rounded">Derniers 30 jours</div>
                                 </div>
 

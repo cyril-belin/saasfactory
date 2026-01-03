@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Check, Trash2, Plus, Star } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminPlansPage() {
     const plans = await prisma.subscriptionPlan.findMany({
         orderBy: { amount: 'asc' }

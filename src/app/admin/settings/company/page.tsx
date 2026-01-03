@@ -6,6 +6,8 @@ export const metadata: Metadata = {
     title: "Paramètres Entreprise | Admin",
 }
 
+export const dynamic = 'force-dynamic'
+
 export default async function CompanySettingsPage() {
     const settings = await getLegalSettings()
 
