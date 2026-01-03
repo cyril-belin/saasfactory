@@ -1,7 +1,7 @@
 // src/app/dashboard/settings/workspace/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
@@ -18,8 +18,9 @@ import {
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
-import { updateWorkspace } from '@/lib/services/workspace' // Make sure this is client-safe or use server action
 import { Separator } from "@/components/ui/separator"
+import { useWorkspace } from '@/contexts/WorkspaceContext'
+import { updateWorkspaceAction } from '@/lib/actions/workspace'
 
 const workspaceFormSchema = z.object({
     name: z.string().min(2, {
@@ -30,25 +31,75 @@ const workspaceFormSchema = z.object({
 
 export default function WorkspaceSettingsPage() {
     const [isLoading, setIsLoading] = useState(false)
+    const { activeWorkspace, isLoading: isLoadingWorkspace } = useWorkspace()
 
     const form = useForm<z.infer<typeof workspaceFormSchema>>({
         resolver: zodResolver(workspaceFormSchema),
         defaultValues: {
-            name: "", // TODO: Fetch
+            name: "",
             slug: "",
         },
     })
 
+    // Load workspace data into form when available
+    useEffect(() => {
+        if (activeWorkspace) {
+            form.reset({
+                name: activeWorkspace.name,
+                slug: activeWorkspace.slug,
+            })
+        }
+    }, [activeWorkspace, form])
+
     async function onSubmit(values: z.infer<typeof workspaceFormSchema>) {
+        if (!activeWorkspace) {
+            toast.error("Aucun workspace actif")
+            return
+        }
+
         setIsLoading(true)
         try {
-            // Mock update
-            toast.success("Workspace mis à jour")
+            const result = await updateWorkspaceAction({
+                workspaceId: activeWorkspace.id,
+                name: values.name,
+            })
+
+            if (result.success) {
+                toast.success(result.message)
+            } else {
+                toast.error(result.message)
+            }
         } catch (error: any) {
             toast.error("Erreur lors de la mise à jour")
         } finally {
             setIsLoading(false)
         }
+    }
+
+    if (isLoadingWorkspace) {
+        return (
+            <div className="space-y-6">
+                <div>
+                    <h3 className="text-lg font-medium">Workspace</h3>
+                    <p className="text-sm text-muted-foreground">
+                        Chargement...
+                    </p>
+                </div>
+            </div>
+        )
+    }
+
+    if (!activeWorkspace) {
+        return (
+            <div className="space-y-6">
+                <div>
+                    <h3 className="text-lg font-medium">Workspace</h3>
+                    <p className="text-sm text-muted-foreground">
+                        Aucun workspace trouvé.
+                    </p>
+                </div>
+            </div>
+        )
     }
 
     return (

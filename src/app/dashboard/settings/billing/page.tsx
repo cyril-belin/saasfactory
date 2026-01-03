@@ -8,20 +8,24 @@ import { CreditCard, Check, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-
-// Placeholder workspace ID - in real app would come from context/url
-const DEMO_WORKSPACE_ID = 'PLACEHOLDER_ID'
+import { useWorkspace } from '@/contexts/WorkspaceContext'
 
 export default function BillingSettingsPage() {
     const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
+    const { activeWorkspace, isLoading: isLoadingWorkspace } = useWorkspace()
 
     const handleManageSubscription = async () => {
+        if (!activeWorkspace) {
+            toast.error("Aucun workspace actif")
+            return
+        }
+
         setIsLoading(true)
         try {
             const res = await fetch('/api/stripe/portal', {
                 method: 'POST',
-                body: JSON.stringify({ workspaceId: DEMO_WORKSPACE_ID })
+                body: JSON.stringify({ workspaceId: activeWorkspace.id })
             })
 
             if (!res.ok) throw new Error('Portal error')
@@ -36,13 +40,18 @@ export default function BillingSettingsPage() {
     }
 
     const handleUpgrade = async () => {
+        if (!activeWorkspace) {
+            toast.error("Aucun workspace actif")
+            return
+        }
+
         setIsLoading(true)
         try {
             const res = await fetch('/api/stripe/checkout', {
                 method: 'POST',
                 body: JSON.stringify({
                     priceId: 'price_PRO', // Placeholder
-                    workspaceId: DEMO_WORKSPACE_ID
+                    workspaceId: activeWorkspace.id
                 })
             })
 
@@ -56,6 +65,33 @@ export default function BillingSettingsPage() {
             setIsLoading(false)
         }
     }
+
+    if (isLoadingWorkspace) {
+        return (
+            <div className="space-y-6">
+                <div>
+                    <h3 className="text-lg font-medium">Facturation</h3>
+                    <p className="text-sm text-muted-foreground">
+                        Chargement...
+                    </p>
+                </div>
+            </div>
+        )
+    }
+
+    if (!activeWorkspace) {
+        return (
+            <div className="space-y-6">
+                <div>
+                    <h3 className="text-lg font-medium">Facturation</h3>
+                    <p className="text-sm text-muted-foreground">
+                        Aucun workspace trouvé.
+                    </p>
+                </div>
+            </div>
+        )
+    }
+
 
     return (
         <div className="space-y-6">
