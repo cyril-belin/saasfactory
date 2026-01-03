@@ -6,6 +6,7 @@ import VerifyEmail from '../../../emails/verify-email'
 import ResetPassword from '../../../emails/reset-password'
 import PaymentSuccess from '../../../emails/payment-success'
 import PaymentFailed from '../../../emails/payment-failed'
+import WebhookFailedEmail from '../../../emails/webhook-failed'
 
 // Helper since emails folder is outside src in standard next structure sometimes, 
 // but here I put checks. If relative imports fail, I might need to adjust tsconfig paths.
@@ -60,4 +61,13 @@ export async function sendPaymentSuccessEmail(to: string, planName: string, amou
 export async function sendPaymentFailedEmail(to: string, amount: string) {
     const html = await render(PaymentFailed({ amount }))
     return sendEmail({ to, subject: 'Action requise : Paiement échoué', html })
+}
+
+export async function sendWebhookFailedEmail(
+    to: string,
+    props: { eventId: string; eventType: string; error: string; retryCount: number; payloadSummary: string }
+) {
+    const adminUrl = process.env.NEXT_PUBLIC_APP_URL + '/admin/webhooks'
+    const html = await render(WebhookFailedEmail({ ...props, adminUrl }))
+    return sendEmail({ to, subject: `[URGENT] Webhook Failed: ${props.eventType}`, html })
 }

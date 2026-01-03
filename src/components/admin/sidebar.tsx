@@ -13,7 +13,8 @@ import {
     Shield,
     Flag,
     CreditCard,
-    LifeBuoy
+    LifeBuoy,
+    Webhook
 } from 'lucide-react'
 
 const adminRoutes = [
@@ -58,6 +59,12 @@ const adminRoutes = [
         icon: LifeBuoy,
         href: '/admin/support',
         color: 'text-amber-500',
+    },
+    {
+        label: 'Webhooks',
+        icon: Webhook,
+        href: '/admin/webhooks',
+        color: 'text-cyan-500',
     },
     {
         label: 'Paramètres',

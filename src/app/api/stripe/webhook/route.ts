@@ -4,7 +4,8 @@ import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import Stripe from 'stripe'
-import { sendPaymentSuccessEmail, sendPaymentFailedEmail } from '@/lib/services/email'
+import { processStripeBusinessLogic } from '@/lib/services/stripe-processing'
+import { sendWebhookFailedEmail } from '@/lib/services/email'
 
 // Helper to get raw body buffer for signature verification
 async function getRawBody(request: Request): Promise<Buffer> {
@@ -32,86 +33,83 @@ export async function POST(req: Request) {
         return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 })
     }
 
-    // Idempotency check
-    const existingEvent = await prisma.stripeEvent.findUnique({
-        where: { id: event.id }
-    })
+    // 1. Log event reception (idempotency + audit)
+    // Cast to any to handle stale IDE types
+    const dbEvent = await prisma.stripeEvent.upsert({
+        where: { id: event.id },
+        update: {
+            // @ts-ignore
+            lastAttempt: new Date(),
+        },
+        create: {
+            id: event.id,
+            type: event.type,
+            // @ts-ignore
+            status: 'PENDING',
+            payload: event as any,
+            retryCount: 0,
+            lastAttempt: new Date(),
+        }
+    }) as any
 
-    if (existingEvent) {
-        console.log(`Event ${event.id} already processed`)
+    // Idempotency: If already SUCCESS, stop.
+    if (dbEvent.status === 'SUCCESS') {
         return new NextResponse('Event already processed', { status: 200 })
     }
 
     try {
-        switch (event.type) {
-            case 'checkout.session.completed': {
-                const session = event.data.object as Stripe.Checkout.Session
-                const workspaceId = session.metadata?.workspaceId
-
-                if (workspaceId) {
-                    await prisma.workspace.update({
-                        where: { id: workspaceId },
-                        data: {
-                            subscriptionStatus: 'ACTIVE',
-                            stripeCustomerId: session.customer as string,
-                            stripeSubscriptionId: session.subscription as string
-                        }
-                    })
-                }
-                break
-            }
-            case 'invoice.payment_succeeded': {
-                const invoice = event.data.object as Stripe.Invoice
-                const email = invoice.customer_email || ''
-
-                // Find workspace by subscription or customer to be safe
-                // Optional: Update workspace status explicitly to ACTIVE
-
-                if (email && invoice.hosted_invoice_url) {
-                    await sendPaymentSuccessEmail(
-                        email,
-                        'Abonnement Pro', // Can be dynamic based on price ID
-                        (invoice.amount_paid / 100).toFixed(2) + ' €'
-                    )
-                }
-                break
-            }
-            case 'invoice.payment_failed': {
-                const invoice = event.data.object as Stripe.Invoice
-                const email = invoice.customer_email || ''
-
-                // Find workspace and mark as PAST_DUE or CANCELLED if needed
-
-                if (email) {
-                    await sendPaymentFailedEmail(email, (invoice.amount_due / 100).toFixed(2) + ' €')
-                }
-                break
-            }
-            // Handle cancellation
-            case 'customer.subscription.deleted': {
-                const subscription = event.data.object as Stripe.Subscription
-
-                await prisma.workspace.updateMany({
-                    where: { stripeSubscriptionId: subscription.id },
-                    data: { subscriptionStatus: 'CANCELED' }
-                })
-                break
-            }
-        }
-
-        // Log event
-        await prisma.stripeEvent.create({
+        await prisma.stripeEvent.update({
+            where: { id: event.id },
             data: {
-                id: event.id,
-                type: event.type,
-                processed: true
+                // @ts-ignore
+                status: 'PROCESSING'
+            }
+        })
+
+        await processStripeBusinessLogic(event)
+
+        await prisma.stripeEvent.update({
+            where: { id: event.id },
+            data: {
+                // @ts-ignore
+                status: 'SUCCESS',
+                processed: true,
+                retryCount: { increment: 1 }
             }
         })
 
         return NextResponse.json({ received: true })
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Webhook processing failed:', error)
+
+        const failedEvent = await prisma.stripeEvent.update({
+            where: { id: event.id },
+            data: {
+                // @ts-ignore
+                status: 'FAILED',
+                error: error.message || 'Unknown error',
+                retryCount: { increment: 1 }
+            }
+        }) as any
+
+        // Alerting: If retry count reaches 3
+        if (failedEvent.retryCount >= 3) {
+            const adminEmail = process.env.ADMIN_EMAIL || process.env.RESEND_FROM_EMAIL || 'admin@example.com'
+            try {
+                await sendWebhookFailedEmail(adminEmail, {
+                    eventId: failedEvent.id,
+                    eventType: failedEvent.type,
+                    error: error.message || 'Unknown error',
+                    retryCount: failedEvent.retryCount,
+                    payloadSummary: JSON.stringify(failedEvent.payload || {}).slice(0, 500)
+                })
+            } catch (emailErr) {
+                console.error('Failed to send alert email', emailErr)
+            }
+        }
+
+        // We return 500 to let Stripe retry
         return new NextResponse('Webhook handler failed', { status: 500 })
     }
 }

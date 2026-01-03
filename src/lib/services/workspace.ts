@@ -71,11 +71,20 @@ export const deleteWorkspace = async (id: string) => {
     })
 }
 
+import { MeteringService } from './metering'
+import { MetricType } from '@prisma/client'
+
 export const addMember = async (
     workspaceId: string,
     email: string,
     role: 'MEMBER' | 'OWNER' = 'MEMBER'
 ) => {
+    // Check limit
+    const canAdd = await MeteringService.checkLimit(workspaceId, MetricType.MEMBERS)
+    if (!canAdd) {
+        throw new Error('MEMBERS_LIMIT_REACHED')
+    }
+
     const user = await prisma.user.findUnique({
         where: { email },
     })
@@ -84,17 +93,22 @@ export const addMember = async (
         throw new Error('User not found')
     }
 
-    return prisma.workspaceMember.create({
+    const member = await prisma.workspaceMember.create({
         data: {
             workspaceId,
             userId: user.id,
             role,
         },
     })
+
+    // Increment usage
+    await MeteringService.incrementUsage(workspaceId, MetricType.MEMBERS, 1)
+
+    return member
 }
 
 export const removeMember = async (workspaceId: string, userId: string) => {
-    return prisma.workspaceMember.delete({
+    const result = await prisma.workspaceMember.delete({
         where: {
             workspaceId_userId: {
                 workspaceId,
@@ -102,4 +116,9 @@ export const removeMember = async (workspaceId: string, userId: string) => {
             },
         },
     })
+
+    // Decrement usage
+    await MeteringService.incrementUsage(workspaceId, MetricType.MEMBERS, -1)
+
+    return result
 }

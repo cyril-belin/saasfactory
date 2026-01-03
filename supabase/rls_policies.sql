@@ -102,7 +102,7 @@ FOR UPDATE USING (
 DROP POLICY IF EXISTS "Users can create workspace" ON "Workspace";
 CREATE POLICY "Users can create workspace" ON "Workspace" 
 FOR INSERT WITH CHECK (
-  ownerId = auth.uid()::text
+  "ownerId" = auth.uid()::text
 );
 
 -- ==============================================================================

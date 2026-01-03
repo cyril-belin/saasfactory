@@ -14,9 +14,15 @@ datasource db {
 // USERS
 // ============================================
 // Users table extends Supabase Auth users
+enum UserRole {
+  USER
+  SUPER_ADMIN
+}
+
 model User {
   id                String              @id @default(uuid())
   email             String              @unique
+  role              UserRole            @default(USER)
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   
@@ -48,10 +54,42 @@ model Workspace {
   // Relations
   owner                     User                @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   members                   WorkspaceMember[]
+  usages                    Usage[]
   
   @@index([ownerId])
   @@index([stripeCustomerId])
   @@index([stripeSubscriptionId])
+}
+
+// ============================================
+// METERING / USAGE
+// ============================================
+model Usage {
+  id            String       @id @default(uuid())
+  workspaceId   String
+  metricType    MetricType
+  currentValue  Int          @default(0)
+  maxValue      Int          // Limit snapshot or override
+  resetPeriod   ResetPeriod  @default(MONTHLY)
+  lastResetAt   DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  
+  workspace     Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, metricType])
+  @@index([workspaceId])
+}
+
+enum MetricType {
+  MEMBERS
+  API_CALLS
+  STORAGE_MB
+}
+
+enum ResetPeriod {
+  DAILY
+  MONTHLY
+  NEVER
 }
 
 // ============================================
@@ -126,15 +164,29 @@ model FeatureFlag {
 }
 
 // ============================================
-// STRIPE EVENTS (for idempotency)
+// STRIPE EVENTS (for idempotency & logs)
 // ============================================
+enum StripeEventStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+}
+
 model StripeEvent {
-  id          String   @id // Stripe event ID
+  id          String            @id // Stripe event ID
   type        String
-  processed   Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  status      StripeEventStatus @default(PENDING)
+  payload     Json?
+  error       Json?
+  retryCount  Int               @default(0)
+  lastAttempt DateTime?         
+  processed   Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
   
   @@index([type])
+  @@index([status])
   @@index([processed])
 }
 
