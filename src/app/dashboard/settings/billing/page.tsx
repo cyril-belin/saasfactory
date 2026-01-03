@@ -8,20 +8,21 @@ import { CreditCard, Check, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-
-// Placeholder workspace ID - in real app would come from context/url
-const DEMO_WORKSPACE_ID = 'PLACEHOLDER_ID'
+import { useWorkspace } from '@/contexts/workspace-context'
 
 export default function BillingSettingsPage() {
     const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
+    const { workspace } = useWorkspace()
 
     const handleManageSubscription = async () => {
+        if (!workspace) return
+
         setIsLoading(true)
         try {
             const res = await fetch('/api/stripe/portal', {
                 method: 'POST',
-                body: JSON.stringify({ workspaceId: DEMO_WORKSPACE_ID })
+                body: JSON.stringify({ workspaceId: workspace.id })
             })
 
             if (!res.ok) throw new Error('Portal error')
@@ -36,13 +37,15 @@ export default function BillingSettingsPage() {
     }
 
     const handleUpgrade = async () => {
+        if (!workspace) return
+
         setIsLoading(true)
         try {
             const res = await fetch('/api/stripe/checkout', {
                 method: 'POST',
                 body: JSON.stringify({
-                    priceId: 'price_PRO', // Placeholder
-                    workspaceId: DEMO_WORKSPACE_ID
+                    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO || 'price_PRO',
+                    workspaceId: workspace.id
                 })
             })
 

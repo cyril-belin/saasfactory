@@ -18,8 +18,10 @@ import {
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
-import { updateWorkspace } from '@/lib/services/workspace' // Make sure this is client-safe or use server action
+import { updateWorkspaceAction } from '@/lib/actions/workspace'
 import { Separator } from "@/components/ui/separator"
+import { useWorkspace } from '@/contexts/workspace-context'
+import { useEffect } from 'react'
 
 const workspaceFormSchema = z.object({
     name: z.string().min(2, {
@@ -30,22 +32,34 @@ const workspaceFormSchema = z.object({
 
 export default function WorkspaceSettingsPage() {
     const [isLoading, setIsLoading] = useState(false)
+    const { workspace } = useWorkspace()
 
     const form = useForm<z.infer<typeof workspaceFormSchema>>({
         resolver: zodResolver(workspaceFormSchema),
         defaultValues: {
-            name: "", // TODO: Fetch
+            name: "",
             slug: "",
         },
     })
 
+    useEffect(() => {
+        if (workspace) {
+            form.reset({
+                name: workspace.name,
+                slug: workspace.slug
+            })
+        }
+    }, [workspace, form])
+
     async function onSubmit(values: z.infer<typeof workspaceFormSchema>) {
+        if (!workspace) return
+
         setIsLoading(true)
         try {
-            // Mock update
+            await updateWorkspaceAction(workspace.id, values)
             toast.success("Workspace mis à jour")
         } catch (error: any) {
-            toast.error("Erreur lors de la mise à jour")
+            toast.error(error.message || "Erreur lors de la mise à jour")
         } finally {
             setIsLoading(false)
         }

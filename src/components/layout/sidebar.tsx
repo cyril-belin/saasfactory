@@ -31,9 +31,10 @@ import {
 interface SidebarProps {
     user: any
     showWorkspaceSwitcher: boolean
+    workspaces: any[]
 }
 
-export function Sidebar({ user, showWorkspaceSwitcher }: SidebarProps) {
+export function Sidebar({ user, showWorkspaceSwitcher, workspaces }: SidebarProps) {
     const pathname = usePathname()
     const router = useRouter()
 
@@ -64,7 +65,7 @@ export function Sidebar({ user, showWorkspaceSwitcher }: SidebarProps) {
             {/* Workspace switcher */}
             {showWorkspaceSwitcher && (
                 <div className="mb-6">
-                    <WorkspaceSwitcher />
+                    <WorkspaceSwitcher workspaces={workspaces} />
                 </div>
             )}
 
