@@ -43,7 +43,7 @@ export function DeleteWorkspaceButton({ workspaceId, workspaceName }: DeleteWork
             } else {
                 toast.error(res.error)
             }
-        } catch (e) {
+        } catch (_e) {
             toast.error("Erreur lors de la suppression")
         } finally {
             setIsLoading(false)

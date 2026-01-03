@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 interface SidebarProps {
-    user: any
+    user: any // eslint-disable-line @typescript-eslint/no-explicit-any
     showWorkspaceSwitcher: boolean
     showStorage?: boolean
     showChangelog?: boolean
@@ -46,7 +46,10 @@ export function Sidebar({ user, showWorkspaceSwitcher, showStorage, showChangelo
     const [mounted, setMounted] = useState(false)
 
     useEffect(() => {
-        setMounted(true)
+        const timer = setTimeout(() => {
+            setMounted(true)
+        }, 0)
+        return () => clearTimeout(timer)
     }, [])
 
     const navigation = [

@@ -6,7 +6,7 @@ import { Bell } from 'lucide-react'
 import { getRecentAnnouncements } from '@/lib/services/announcements'
 import { isFeatureEnabled } from '@/lib/services/feature-flags'
 
-export async function ChangelogWidget({ userId }: { userId: string }) {
+export async function ChangelogWidget({ userId: _userId }: { userId: string }) {
     const isEnabled = await isFeatureEnabled('changelog_in_app')
 
     if (!isEnabled) return null
@@ -40,7 +40,7 @@ export async function ChangelogWidget({ userId }: { userId: string }) {
                 </div>
                 <div className="mt-4 pt-2 border-t text-center">
                     <Link href="/dashboard/changelog" className="text-xs text-primary hover:underline">
-                        Voir tout l'historique
+                        Voir tout l&apos;historique
                     </Link>
                 </div>
             </CardContent>

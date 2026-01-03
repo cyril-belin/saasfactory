@@ -34,7 +34,7 @@ export function MainFeature() {
                         Fonctionnalité Principale (Template)
                     </CardTitle>
                     <CardDescription>
-                        C'est ici que vous implémenterez le cœur de votre SaaS.
+                        C&apos;est ici que vous implémenterez le cœur de votre SaaS.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
